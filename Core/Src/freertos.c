@@ -141,7 +141,7 @@ void MX_FREERTOS_Init(void) {
 
   /* Create the queue(s) */
   /* creation of tiva_msg */
-  tiva_msgHandle = osMessageQueueNew (16, sizeof(tiva_msg_t), &tiva_msg_attributes);
+  tiva_msgHandle = osMessageQueueNew (1024, sizeof(tiva_msg_t), &tiva_msg_attributes);
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
