@@ -7,9 +7,7 @@
 
 #include <stdint.h>
 #include "cmsis_os.h"
-#include "main.h"
 #include "uart_drv.h"
-
 #include "usart.h"
 
 extern DMA_HandleTypeDef hdma_usart6_rx;
