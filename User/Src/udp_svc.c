@@ -89,5 +89,6 @@ void udp_svc(void)
             close(sock);
         }
     }
-    vTaskDelete(NULL);
+    // vTaskDelete(NULL);
+    osThreadTerminate(NULL);
 }

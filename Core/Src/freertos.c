@@ -65,6 +65,7 @@ const osMessageQueueAttr_t tiva_msg_attributes = {
 /* USER CODE BEGIN FunctionPrototypes */
 extern void tcp_svc(void);
 extern void udp_svc(void);
+extern void msc_svc(void);
 /* USER CODE END FunctionPrototypes */
 
 void StartDefaultTask(void *argument);
@@ -142,7 +143,7 @@ void MX_FREERTOS_Init(void) {
 
   /* Create the queue(s) */
   /* creation of tiva_msg */
-  tiva_msgHandle = osMessageQueueNew (1024, sizeof(tiva_msg_t), &tiva_msg_attributes);
+  tiva_msgHandle = osMessageQueueNew (4096, sizeof(tiva_msg_t), &tiva_msg_attributes);
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
@@ -175,7 +176,7 @@ void StartDefaultTask(void *argument)
   /* USER CODE BEGIN StartDefaultTask */
   /* Infinite loop */
   init_uart_drv();
-  tcp_svc();
+  udp_svc();
   for(;;)
   {
     osDelay(1);
