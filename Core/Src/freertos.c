@@ -176,7 +176,7 @@ void StartDefaultTask(void *argument)
   /* USER CODE BEGIN StartDefaultTask */
   /* Infinite loop */
   init_uart_drv();
-  udp_svc();
+  msc_svc();
   for(;;)
   {
     osDelay(1);

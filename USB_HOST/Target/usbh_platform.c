@@ -30,13 +30,13 @@
   * @brief  Drive VBUS.
   * @param  state : VBUS state
   *          This parameter can be one of the these values:
-  *           - 0 : VBUS Active
-  *           - 1 : VBUS Inactive
+  *          - 0 : VBUS Active
+  *          - 1 : VBUS Inactive
   */
-void MX_DriverVbusFS(uint8_t state)
+void MX_DriverVbusHS(uint8_t state)
 { 
   uint8_t data = state; 
-  /* USER CODE BEGIN PREPARE_GPIO_DATA_VBUS_FS */
+  /* USER CODE BEGIN PREPARE_GPIO_DATA_VBUS_HS */
   if(state == 0)
   {
     /* Drive high Charge pump */ 	     
@@ -47,7 +47,7 @@ void MX_DriverVbusFS(uint8_t state)
     /* Drive low Charge pump */
     data = GPIO_PIN_RESET;
   }
-  /* USER CODE END PREPARE_GPIO_DATA_VBUS_FS */
+  /* USER CODE END PREPARE_GPIO_DATA_VBUS_HS */
   HAL_GPIO_WritePin(GPIOD,GPIO_PIN_5,(GPIO_PinState)data);
 }
 
