@@ -16,6 +16,9 @@
 
 #include "uart_drv.h"
 
+#include "lwip/api.h"
+#include "lwip/ip.h"
+
 #define PORT 8998
 
 extern osMessageQueueId_t tiva_msgHandle;
@@ -108,5 +111,81 @@ CLEAN_UP:
     // vTaskDelete(NULL);
     // osThreadTerminate(NULL);
     return;
+}
+
+
+
+static void tcp_server_netconn_thread(void *arg)
+{
+	LWIP_UNUSED_ARG(arg);
+
+	struct netconn *conn, *newconn;
+	err_t err;
+
+	tiva_msg_t msg;
+
+	/* create a connection structure */
+	conn = netconn_new(NETCONN_TCP);
+
+	/* bind the connection to port 2000 on any local IP address */
+	netconn_bind(conn, NULL, PORT);
+
+	// printf("Now listening\n");
+	/* tell the connection to listen for incoming connection requests */
+	netconn_listen(conn);
+
+	/* Grab new connection. */
+	err = netconn_accept(conn, &newconn);
+	// printf("accepted new connection %p\n", newconn);
+
+	/* Process the new connection. */
+	if (err == ERR_OK)
+	{
+		struct netbuf *buf;
+		void *data;
+		u16_t len;
+
+		// netconn_set_recvtimeout(newconn, 10000);
+		// err = netconn_recv(newconn, &buf);
+		// int optval = 1;
+		// setsockopt(net, SOL_SOCKET, SO_KEEPALIVE, &optval, sizeof(optval));
+		// newconn->pcb.tcp->so_options |= SOF_KEEPALIVE;
+		((struct tcp_pcb *)newconn->pcb.tcp)->so_options = |= SOF_KEEPALIVE;
+
+		while(1) {
+	    	if(osMessageQueueGet(tiva_msgHandle, &msg, NULL, 0U) == osOK) {
+				// do{
+					// netbuf_data(buf, &data, &len);
+					err = netconn_write(newconn, msg.buff, msg.len, NETCONN_COPY);
+					if (err != ERR_OK) {
+						// printf("tcpecho: netconn_write: error \"%s\"\n", lwip_strerr(err));
+					}
+				// } while (netbuf_next(buf) >= 0);
+			}
+		}
+/*
+		while ((err = netconn_recv(newconn, &buf)) == ERR_OK)
+		{
+			// printf("Received data\n");
+			do{
+				netbuf_data(buf, &data, &len);
+				err = netconn_write(newconn, data, len, NETCONN_COPY);
+				if (err != ERR_OK) {
+					// printf("tcpecho: netconn_write: error \"%s\"\n", lwip_strerr(err));
+				}
+			} while (netbuf_next(buf) >= 0);
+
+			netbuf_delete(buf);
+		}
+*/
+	/* Close connection and discard connection identifier. */
+	netconn_close(newconn);
+	netconn_delete(newconn);
+	}
+}
+
+void tcp_server_netconn_init(void)
+{
+  sys_thread_new("tcp_server_netconn", tcp_server_netconn_thread, NULL, 4096, DEFAULT_THREAD_PRIO);
 }
 

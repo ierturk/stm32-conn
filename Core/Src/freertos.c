@@ -66,6 +66,7 @@ const osMessageQueueAttr_t tiva_msg_attributes = {
 extern void tcp_svc(void);
 extern void udp_svc(void);
 extern void msc_svc(void);
+extern void tcp_server_netconn_init(void);
 /* USER CODE END FunctionPrototypes */
 
 void StartDefaultTask(void *argument);
@@ -176,7 +177,8 @@ void StartDefaultTask(void *argument)
   /* USER CODE BEGIN StartDefaultTask */
   /* Infinite loop */
   init_uart_drv();
-  udp_svc();
+  // tcp_svc();
+  tcp_server_netconn_init();
   for(;;)
   {
 	  osDelay(1);
