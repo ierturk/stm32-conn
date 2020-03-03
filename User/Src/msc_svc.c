@@ -150,9 +150,9 @@ void msc_svc(void)
 				break;
 
 			case 1:
-				msc_write_data();
-				// msc_write_test_data();
-				// f_sync(&myFile);
+				// msc_write_data();
+				msc_write_test_data();
+				f_sync(&myFile);
 				break;
 
 

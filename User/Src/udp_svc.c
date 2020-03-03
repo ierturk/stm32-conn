@@ -63,7 +63,7 @@ void udp_svc(void)
             int len = recvfrom(sock, rx_buffer, sizeof(rx_buffer) - 1, 0, (struct sockaddr *)&source_addr, &socklen);
 
             if (len < 0) {
-                break;
+                // break;
             }
             else {
                 if (source_addr.sin_family == PF_INET) {
@@ -90,5 +90,5 @@ void udp_svc(void)
         }
     }
     // vTaskDelete(NULL);
-    osThreadTerminate(NULL);
+    // osThreadTerminate(NULL);
 }

@@ -67,8 +67,9 @@ void tcp_svc(void)
 
     int listen_sock = socket(addr_family, SOCK_STREAM, ip_protocol);
     if (listen_sock < 0) {
-        vTaskDelete(NULL);
-        return;
+        // vTaskDelete(NULL);
+    	goto CLEAN_UP;
+    	return;
     }
 
     int err = bind(listen_sock, (struct sockaddr *)&dest_addr, sizeof(dest_addr));
@@ -90,7 +91,7 @@ void tcp_svc(void)
         socklen_t addr_len = sizeof(source_addr);
         int sock = accept(listen_sock, (struct sockaddr *)&source_addr, &addr_len);
         if (sock < 0) {
-            break;
+            continue;
         }
         if (source_addr.sin_family == PF_INET) {
             inet_ntoa_r(((struct sockaddr_in *)&source_addr)->sin_addr.s_addr, addr_str, sizeof(addr_str) - 1);
@@ -102,7 +103,10 @@ void tcp_svc(void)
     }
 
 CLEAN_UP:
+	shutdown(listen_sock, 0);
     close(listen_sock);
-    vTaskDelete(NULL);
+    // vTaskDelete(NULL);
+    // osThreadTerminate(NULL);
+    return;
 }
 

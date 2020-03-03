@@ -8,7 +8,7 @@
 #ifndef UART_DRV_H_
 #define UART_DRV_H_
 
-#define UART6_DMA_RX_BUFF_SIZE (8192)
+#define UART6_DMA_RX_BUFF_SIZE (4096)
 
 typedef struct {
 	uint8_t *buff;
