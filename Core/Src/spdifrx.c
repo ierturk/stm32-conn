@@ -64,12 +64,12 @@ void HAL_SPDIFRX_MspInit(SPDIFRX_HandleTypeDef* spdifrxHandle)
     /**SPDIFRX GPIO Configuration    
     PD7     ------> SPDIFRX_IN0 
     */
-    GPIO_InitStruct.Pin = SPDIF_RX0_Pin;
+    GPIO_InitStruct.Pin = GPIO_PIN_7;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
     GPIO_InitStruct.Alternate = GPIO_AF8_SPDIFRX;
-    HAL_GPIO_Init(SPDIF_RX0_GPIO_Port, &GPIO_InitStruct);
+    HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
   /* USER CODE BEGIN SPDIFRX_MspInit 1 */
 
@@ -91,7 +91,7 @@ void HAL_SPDIFRX_MspDeInit(SPDIFRX_HandleTypeDef* spdifrxHandle)
     /**SPDIFRX GPIO Configuration    
     PD7     ------> SPDIFRX_IN0 
     */
-    HAL_GPIO_DeInit(SPDIF_RX0_GPIO_Port, SPDIF_RX0_Pin);
+    HAL_GPIO_DeInit(GPIOD, GPIO_PIN_7);
 
   /* USER CODE BEGIN SPDIFRX_MspDeInit 1 */
 
