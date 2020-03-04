@@ -63,7 +63,7 @@ const osMessageQueueAttr_t tiva_msg_attributes = {
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
-extern void tcp_svc(void);
+// extern void tcp_svc(void);
 extern void udp_svc(void);
 extern void msc_svc(void);
 extern void tcp_server_netconn_init(void);

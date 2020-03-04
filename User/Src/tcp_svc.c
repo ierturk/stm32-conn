@@ -25,40 +25,109 @@ extern osMessageQueueId_t tiva_msgHandle;
 
 static void do_retransmit(const int sock)
 {
-    int len;
+    int len, ret;
+    char rx_buffer[128];
+	// int ret;
     tiva_msg_t msg;
+    u32_t ticks_a, ticks_b;
 
-    while(1) {
-        do {
-    		len = -1;
+/*
+    while ((ret = recv(sock, NULL, 1, MSG_PEEK | MSG_DONTWAIT)) != 0) {
+        // sleep(rand() % 2); // Sleep for a bit to avoid spam
+        // fflush(stdin);
+        // printf("I am alive: %d\n", socket);
+    	osDelay(1000);
+    	len = recv(sock, rx_buffer, sizeof(rx_buffer) - 1, MSG_DONTWAIT);
+    	if(len > 0) {
+    		ticks_b = sys_now();
+    	}
+    	osDelay(1000);
+    }
+*/
+
+
+
+    do {
+    	ticks_a = sys_now();
+
+    	ret = recv(sock, NULL, 1, MSG_PEEK | MSG_DONTWAIT);
+    	if(ret <= 0) {
+    		break;
+    	}
+
+    	len = 1;
+
+
+        // len = recv(sock, rx_buffer, sizeof(rx_buffer) - 1, MSG_PEEK | MSG_DONTWAIT);
+
+/*
+        while ((len = recv(sock, NULL, 1, MSG_PEEK | MSG_DONTWAIT)) != 0) {
+            // sleep(rand() % 2); // Sleep for a bit to avoid spam
+            // fflush(stdin);
+            // printf("I am alive: %d\n", socket);
+        	osDelay(1);
+        	// len = recv(sock, rx_buffer, sizeof(rx_buffer) - 1, MSG_DONTWAIT);
+        	// if(len > 0) {
+        	//	ticks_b = sys_now();
+        	// }
+        }
+*/
+/*
+        // len = recv(sock, rx_buffer, sizeof(rx_buffer) - 1, MSG_DONTWAIT);
+        ticks_b = sys_now();
+
+        if (len < 0) {
+            // LOGE(TAG, "Error occurred during receiving: errno %d", errno);
+        	len = 128;
+        } else if (len == 0) {
+            // LOGW(TAG, "Connection closed");
+        	break;
+        } else {
+            rx_buffer[len] = 0; // Null-terminate whatever is received and treat it like a string
+            // LOGI(TAG, "Received %d bytes: %s", len, rx_buffer);
+
+            // send() can return less bytes than supplied length.
+            // Walk-around for robust implementation.
+
+            int to_write = len;
+            while (to_write > 0) {
+                int written = send(sock, rx_buffer + (len - to_write), to_write, 0);
+                if (written < 0) {
+                    // LOGE(TAG, "Error occurred during sending: errno %d", errno);
+                }
+                to_write -= written;
+            }
+
+
         	if(osMessageQueueGet(tiva_msgHandle, &msg, NULL, 0U) == osOK) {
     			len = msg.len;
-    		}
-
-        	if (len < 0) {
-        		//
-            } else if (len == 0) {
-                // printf("Connection closed");
-            } else {
-    			int to_write = len;
-    			while (to_write > 0) {
-    				int written = send(sock, msg.buff + (len - to_write), to_write, 0);
-    				if (written < 0) {
-    					// printf("Error occurred during sending");
-    				}
-    				to_write -= written;
-    			}
+                int to_write = len;
+                while (to_write > 0) {
+                    int written = send(sock, msg.buff + (len - to_write), to_write, 0);
+                    if (written < 0) {
+                        // LOGE(TAG, "Error occurred during sending: errno %d", errno);
+                    	len = -1;
+                    	break;
+                    }
+                    to_write -= written;
+                }
             }
-        } while (len > 0);
-    }
+
+        }
+*/
+    } while (len > 0);
 }
 
-void tcp_svc(void)
+
+static void tcp_svc(void *arg)
 {
-    char addr_str[128];
+	LWIP_UNUSED_ARG(arg);
+
+
+	struct lwip_sock *tcp_sock;
+	char addr_str[128];
     int addr_family;
     int ip_protocol;
-
 
     struct sockaddr_in dest_addr;
     dest_addr.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -80,7 +149,7 @@ void tcp_svc(void)
         goto CLEAN_UP;
     }
 
-    err = listen(listen_sock, 1);
+    err = listen(listen_sock, 10);
     if (err != 0) {
         goto CLEAN_UP;
     }
@@ -99,6 +168,10 @@ void tcp_svc(void)
         if (source_addr.sin_family == PF_INET) {
             inet_ntoa_r(((struct sockaddr_in *)&source_addr)->sin_addr.s_addr, addr_str, sizeof(addr_str) - 1);
         }
+
+        // fcntl(sock, F_SETFL, fcntl(sock, F_GETFL, 0) | O_NONBLOCK);
+        // tcp_sock =     get_socket(sock);
+
         do_retransmit(sock);
 
         shutdown(sock, 0);
@@ -109,8 +182,8 @@ CLEAN_UP:
 	shutdown(listen_sock, 0);
     close(listen_sock);
     // vTaskDelete(NULL);
-    // osThreadTerminate(NULL);
-    return;
+    osThreadTerminate(NULL);
+    // return;
 }
 
 
@@ -141,16 +214,16 @@ static void tcp_server_netconn_thread(void *arg)
 	/* Process the new connection. */
 	if (err == ERR_OK)
 	{
-		struct netbuf *buf;
-		void *data;
-		u16_t len;
+		// struct netbuf *buf;
+		// void *data;
+		// u16_t len;
 
 		// netconn_set_recvtimeout(newconn, 10000);
 		// err = netconn_recv(newconn, &buf);
 		// int optval = 1;
 		// setsockopt(net, SOL_SOCKET, SO_KEEPALIVE, &optval, sizeof(optval));
 		// newconn->pcb.tcp->so_options |= SOF_KEEPALIVE;
-		((struct tcp_pcb *)newconn->pcb.tcp)->so_options = |= SOF_KEEPALIVE;
+		// ((struct tcp_pcb *)newconn->pcb.tcp)->so_options = |= SOF_KEEPALIVE;
 
 		while(1) {
 	    	if(osMessageQueueGet(tiva_msgHandle, &msg, NULL, 0U) == osOK) {
@@ -186,6 +259,6 @@ static void tcp_server_netconn_thread(void *arg)
 
 void tcp_server_netconn_init(void)
 {
-  sys_thread_new("tcp_server_netconn", tcp_server_netconn_thread, NULL, 4096, DEFAULT_THREAD_PRIO);
+  sys_thread_new("tcp_svc", tcp_svc, NULL, 1024, 5);
 }
 
