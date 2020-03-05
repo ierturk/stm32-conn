@@ -6,7 +6,6 @@
  */
 
 #include <string.h>
-#include "stdio.h"
 #include <sys/param.h>
 
 #include "lwip/err.h"
@@ -14,17 +13,14 @@
 #include "lwip/sys.h"
 #include <lwip/netdb.h>
 
-#include "uart_drv.h"
-
-#include "lwip/api.h"
-#include "lwip/ip.h"
-#include "task.h"
+#include <uart_drv.h>
+#include "queue.h"
 
 #define PORT 8998
 #define TCP_SERVER_THREAD_PRIO  ( tskIDLE_PRIORITY + 5 )
 
-
-extern osMessageQueueId_t tiva_msgHandle;
+tiva_msg_t tcpUartBuff = {};
+extern QueueHandle_t serBuffQueueHandle;
 extern UART_HandleTypeDef huart6;
 
 static void do_retransmit(const int sock)
@@ -32,7 +28,6 @@ static void do_retransmit(const int sock)
     int len;
     int ret;
     char rx_buffer[128];
-    tiva_msg_t msg;
 
 
     while (1) {
@@ -44,22 +39,23 @@ static void do_retransmit(const int sock)
     		if(len == 0) {
     			break;
     		} else if (len > 0) {
-    			HAL_UART_Transmit_DMA(&huart6, (uint8_t *)rx_buffer, len);
+    			// HAL_UART_Transmit_DMA(&huart6, (uint8_t *)rx_buffer, len);
     		}
 
-        	if(osMessageQueueGet(tiva_msgHandle, &msg, NULL, 0U) == osOK) {
-    			len = msg.len;
-
+        	if(xQueueReceive(serBuffQueueHandle, &tcpUartBuff, portMAX_DELAY)) {
+    			len = tcpUartBuff.len;
+/*
     			if(len > 0) {
     				int to_write = len;
     				while (to_write > 0) {
-    					int written = send(sock, msg.buff + (len - to_write), to_write, 0);
+    					int written = send(sock, tcpUartBuff.buff + (len - to_write), to_write, 0);
     					if (written < 0) {
     						// LOGE(TAG, "Error occurred during sending: errno %d", errno);
     					}
     					to_write -= written;
     				}
     	        }
+*/
     		}
     	}
     }
@@ -75,15 +71,15 @@ static void do_retransmit(const int sock)
 		}
 
 		if (len < 0) {
-            // LOGE(TAG, "Error occurred during receiving: errno %d", errno);
+            // ESP_LOGE(TAG, "Error occurred during receiving: errno %d", errno);
         } else if (len == 0) {
-            // LOGW(TAG, "Connection closed");
+            // ESP_LOGW(TAG, "Connection closed");
         } else {
 			int to_write = len;
 			while (to_write > 0) {
 				int written = send(sock, tcpUartBuff.buff + (len - to_write), to_write, 0);
 				if (written < 0) {
-					// LOGE(TAG, "Error occurred during sending: errno %d", errno);
+					// ESP_LOGE(TAG, "Error occurred during sending: errno %d", errno);
 				}
 				to_write -= written;
 			}
@@ -117,14 +113,14 @@ static void tcp_server_task(void *pvParameters)
 
     int err = bind(listen_sock, (struct sockaddr *)&dest_addr, sizeof(dest_addr));
     if (err != 0) {
-        // LOGE(TAG, "Socket unable to bind: errno %d", errno);
+        // ESP_LOGE(TAG, "Socket unable to bind: errno %d", errno);
         goto CLEAN_UP;
     }
     // LOGI(TAG, "Socket bound, port %d", PORT);
 
     err = listen(listen_sock, 1);
     if (err != 0) {
-        // LOGE(TAG, "Error occurred during listen: errno %d", errno);
+        // ESP_LOGE(TAG, "Error occurred during listen: errno %d", errno);
         goto CLEAN_UP;
     }
 
@@ -136,7 +132,7 @@ static void tcp_server_task(void *pvParameters)
         socklen_t addr_len = sizeof(source_addr);
         int sock = accept(listen_sock, (struct sockaddr *)&source_addr, &addr_len);
         if (sock < 0) {
-            //LOGE(TAG, "Unable to accept connection: errno %d", errno);
+            // LOGE(TAG, "Unable to accept connection: errno %d", errno);
             break;
         }
 
@@ -144,7 +140,7 @@ static void tcp_server_task(void *pvParameters)
         if (source_addr.sin_family == PF_INET) {
             inet_ntoa_r(((struct sockaddr_in *)&source_addr)->sin_addr.s_addr, addr_str, sizeof(addr_str) - 1);
         }
-        //LOGI(TAG, "Socket accepted ip address: %s", addr_str);
+        // LOGI(TAG, "Socket accepted ip address: %s", addr_str);
 
         do_retransmit(sock);
 
@@ -161,4 +157,3 @@ void tcp_server_thread_init(void)
 {
     sys_thread_new("tcp_server_task", tcp_server_task, NULL, DEFAULT_THREAD_STACKSIZE, TCP_SERVER_THREAD_PRIO);
 }
-

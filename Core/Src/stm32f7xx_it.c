@@ -49,6 +49,7 @@
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN PFP */
+extern void uart6_dma_usart_rx_check(void);
 
 /* USER CODE END PFP */
 
@@ -237,6 +238,7 @@ void USART6_IRQHandler(void)
   {
   	__HAL_UART_CLEAR_IDLEFLAG (&huart6);
   	HAL_UART_RxCpltCallback (&huart6);
+
   }
   /* USER CODE END USART6_IRQn 1 */
 }

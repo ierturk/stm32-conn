@@ -30,7 +30,6 @@
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
-typedef StaticTask_t osStaticThreadDef_t;
 /* USER CODE BEGIN PTD */
 
 /* USER CODE END PTD */
@@ -51,27 +50,10 @@ typedef StaticTask_t osStaticThreadDef_t;
 /* USER CODE END Variables */
 /* Definitions for defaultTask */
 osThreadId_t defaultTaskHandle;
-uint32_t defaultTaskBuffer[ 128 ];
-osStaticThreadDef_t defaultTaskControlBlock;
 const osThreadAttr_t defaultTask_attributes = {
   .name = "defaultTask",
-  .stack_mem = &defaultTaskBuffer[0],
-  .stack_size = sizeof(defaultTaskBuffer),
-  .cb_mem = &defaultTaskControlBlock,
-  .cb_size = sizeof(defaultTaskControlBlock),
   .priority = (osPriority_t) osPriorityNormal,
-};
-/* Definitions for mscHostTask */
-osThreadId_t mscHostTaskHandle;
-uint32_t mscHostTaskBuffer[ 128 ];
-osStaticThreadDef_t mscHostTaskControlBlock;
-const osThreadAttr_t mscHostTask_attributes = {
-  .name = "mscHostTask",
-  .stack_mem = &mscHostTaskBuffer[0],
-  .stack_size = sizeof(mscHostTaskBuffer),
-  .cb_mem = &mscHostTaskControlBlock,
-  .cb_size = sizeof(mscHostTaskControlBlock),
-  .priority = (osPriority_t) osPriorityNormal,
+  .stack_size = 4096 * 4
 };
 /* Definitions for tiva_msg */
 osMessageQueueId_t tiva_msgHandle;
@@ -81,14 +63,14 @@ const osMessageQueueAttr_t tiva_msg_attributes = {
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
-// extern void tcp_svc(void);
+extern void mscapp_thread(void);
+extern void udp_server_thread_init(void);
 extern void tcp_server_thread_init(void);
+
 /* USER CODE END FunctionPrototypes */
 
 void StartDefaultTask(void *argument);
-void startMscHostTask(void *argument);
 
-extern void MX_FATFS_Init(void);
 extern void MX_USB_HOST_Init(void);
 extern void MX_LWIP_Init(void);
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
@@ -172,9 +154,6 @@ void MX_FREERTOS_Init(void) {
   /* creation of defaultTask */
   defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
-  /* creation of mscHostTask */
-  mscHostTaskHandle = osThreadNew(startMscHostTask, NULL, &mscHostTask_attributes);
-
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
   /* USER CODE END RTOS_THREADS */
@@ -192,33 +171,19 @@ void StartDefaultTask(void *argument)
 {
   /* init code for USB_HOST */
   MX_USB_HOST_Init();
+
+  /* init code for LWIP */
+  MX_LWIP_Init();
   /* USER CODE BEGIN StartDefaultTask */
-  /* Infinite loop */
   tcp_server_thread_init();
   init_uart_drv();
-  for(;;)
-  {
-	  osDelay(1);
-  }
-  /* USER CODE END StartDefaultTask */
-}
 
-/* USER CODE BEGIN Header_startMscHostTask */
-/**
-* @brief Function implementing the mscHostTask thread.
-* @param argument: Not used
-* @retval None
-*/
-/* USER CODE END Header_startMscHostTask */
-void startMscHostTask(void *argument)
-{
-  /* USER CODE BEGIN startMscHostTask */
   /* Infinite loop */
   for(;;)
   {
     osDelay(1);
   }
-  /* USER CODE END startMscHostTask */
+  /* USER CODE END StartDefaultTask */
 }
 
 /* Private application code --------------------------------------------------*/

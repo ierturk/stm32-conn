@@ -1,14 +1,16 @@
 /*
- * uar_drv.h
+ * main_app.h
  *
  *  Created on: Feb 12, 2020
  *      Author: ierturk
  */
 
-#ifndef UART_DRV_H_
-#define UART_DRV_H_
+#ifndef SRC_MAINAPP_H_
+#define SRC_MAINAPP_H_
 
-#define UART6_DMA_RX_BUFF_SIZE (4096)
+#define UART6_DMA_RX_BUFF_SIZE (1024)
+
+#include "stdint.h"
 
 typedef struct {
 	uint8_t *buff;
@@ -18,4 +20,4 @@ typedef struct {
 
 void init_uart_drv(void);
 
-#endif /* UART_DRV_H_ */
+#endif /* SRC_MAINAPP_H_ */

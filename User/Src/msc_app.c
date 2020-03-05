@@ -8,13 +8,19 @@
 #include "usb_host.h"
 #include "usbh_core.h"
 #include "usbh_msc.h"
-// #include "sys.h"
 #include "ff.h"
 
 #include <string.h>
 #include <stdbool.h>
 
-#include "uart_drv.h"
+#include <uart_drv.h>
+
+#include "queue.h"
+
+#define MSCAPP_THREAD_PRIO  ( tskIDLE_PRIORITY + 5 )
+
+osThreadId mscTaskHandle;
+
 
 FIL myFile;
 FRESULT res;
@@ -23,10 +29,13 @@ char rwtext[256];
 uint8_t sub_state = 0;
 
 extern ApplicationTypeDef Appli_state;
+extern USBH_HandleTypeDef hUsbHostHS;
 extern char USBHPath[4];
 extern FATFS USBHFatFS;
 
-extern osMessageQueueId_t tiva_msgHandle;
+
+tiva_msg_t mscUartBuff = {};
+extern QueueHandle_t serBuffQueueHandle;
 
 bool UsbTest_Write(void)
 {
@@ -110,13 +119,10 @@ bool msc_write_test_data(void)
 
 bool msc_write_data(void)
 {
-	tiva_msg_t msg;
-	// osStatus_t status;
-
-	while(osMessageQueueGet(tiva_msgHandle, &msg, NULL, 0U) == osOK) {
-		sprintf(rwtext, "id %lu\r\n", msg.id);
-		res = f_write(&myFile, (const void *)rwtext, strlen(rwtext), &byteswritten);
-		// res = f_write(&myFile, (const void *)msg.buff, msg.len, &byteswritten);
+	while(xQueueReceive(serBuffQueueHandle, &mscUartBuff, portMAX_DELAY)) {
+		// int len = mscUartBuff.len;
+		// mscUartBuff.buff[len] = 0;
+		res = f_write(&myFile, (const void *)mscUartBuff.buff, mscUartBuff.len, &byteswritten);
 		if((res != FR_OK) || (byteswritten == 0))
 		{
 			// return 0;
@@ -126,8 +132,7 @@ bool msc_write_data(void)
 	return 1;
 }
 
-
-void msc_svc(void)
+void mscapp_thread(void)
 {
 	switch(Appli_state)
 	{
@@ -150,9 +155,9 @@ void msc_svc(void)
 				break;
 
 			case 1:
-				// msc_write_data();
-				msc_write_test_data();
-				f_sync(&myFile);
+				msc_write_data();
+				// msc_write_test_data();
+				// f_sync(&myFile);
 				break;
 
 
